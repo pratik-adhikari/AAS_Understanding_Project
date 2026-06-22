@@ -69,6 +69,23 @@ make clean
 
 The latter is intentionally destructive to this project's local runtime data.
 
+## Backup before destructive cleanup
+
+With the baseline running:
+
+```sh
+make backup
+```
+
+Restore an archive into a running baseline:
+
+```sh
+make restore BACKUP=data/backups/aas-learning-YYYYMMDDTHHMMSSZ.archive
+```
+
+Restore uses `--drop`; existing collections covered by the archive are
+replaced. Treat restore as a controlled data operation, not a harmless read.
+
 ## Troubleshooting first startup
 
 Use:

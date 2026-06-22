@@ -1,0 +1,39 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-and-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize local development configuration
+        run: make init
+      - name: Validate repository and Compose files
+        run: make lint
+      - name: Run containerized unit tests
+        run: make unit
+
+  end-to-end:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify every topology
+        run: make verify
+      - name: Upload reviewer evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aas-verification-evidence
+          path: artifacts/
+          if-no-files-found: warn
+

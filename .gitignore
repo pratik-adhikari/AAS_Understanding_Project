@@ -9,3 +9,4 @@ artifacts/
 coverage/
 data/backups/
 data/generated/
+data/reference/*.aasx

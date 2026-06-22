@@ -41,6 +41,7 @@ Read these in order:
 8. [`docs/07-api-cookbook.md`](docs/07-api-cookbook.md)
 9. [`docs/08-troubleshooting.md`](docs/08-troubleshooting.md)
 10. [`docs/09-review-checklist.md`](docs/09-review-checklist.md)
+11. [`docs/10-limitations-and-sources.md`](docs/10-limitations-and-sources.md)
 
 ## Host requirements
 
@@ -52,8 +53,24 @@ Read these in order:
 Java, Python, Node.js, MongoDB, Keycloak, and BaSyx are not installed on the
 host. They run in containers.
 
-## Project status
+## One-command verification
 
-Implementation is in progress. The constraints document is authoritative:
-unfinished acceptance criteria must not be presented as complete.
+```sh
+make init
+make verify
+```
 
+This performs a clean baseline deployment, API checks, persistence recreation,
+secured deployment and RBAC proofs, independent partner exchange twice,
+evidence collection, and final cleanup.
+
+## Main operating modes
+
+```sh
+make up            # baseline learning stack
+make secure-up     # Keycloak and RBAC stack
+make exchange-up   # primary plus independent partner
+```
+
+Each mode has corresponding `*-down`, status, and test targets. Run
+`make help` for the complete command list.

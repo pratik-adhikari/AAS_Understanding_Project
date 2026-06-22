@@ -13,7 +13,7 @@ token_for_user() {
     --data-urlencode client_id=aas-cli \
     --data-urlencode "username=$username" \
     --data-urlencode "password=$password" \
-    "$AUTH_URL" | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])'
+    "$AUTH_URL" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p'
 }
 
 expect_status() {
@@ -57,7 +57,7 @@ service_token=$(curl --noproxy '*' --fail --silent --show-error \
   --data-urlencode grant_type=client_credentials \
   --data-urlencode client_id=aas-service \
   --data-urlencode client_secret=aas_service_dev_secret \
-  "$AUTH_URL" | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
+  "$AUTH_URL" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
 expect_status 200 -H "Authorization: Bearer $service_token" "$API_URL/shells"
 
 printf '%s\n' \
@@ -67,4 +67,3 @@ printf '%s\n' \
   "editor create: allowed ($create_status)" \
   "service client read: allowed (200)" \
   | tee artifacts/security-summary.txt
-

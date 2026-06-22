@@ -5,8 +5,9 @@ COMPOSE := docker compose
 
 .PHONY: help init prerequisites config secure-config exchange-config pull \
 	build generate up secure-up exchange-up ps secure-ps exchange-ps logs \
-	smoke security-test exchange-test down secure-down exchange-down clean \
-	format-check lint unit integration verify
+	smoke persistence-test security-test exchange-test backup restore down \
+	secure-down exchange-down clean fetch-reference format-check lint unit \
+	integration verify
 
 help:
 	@awk 'BEGIN {FS = ":.*##"; printf "AAS learning project commands:\\n\\n"} /^[a-zA-Z_-]+:.*?##/ {printf "  %-18s %s\\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -46,6 +47,9 @@ generate: build ## Generate JSON and AASX from source product data
 	@install -d -m 0777 data/generated
 	@$(COMPOSE) --profile tools run --rm aas-tooling generate
 
+fetch-reference: ## Download and checksum the upstream Schunk AASX example
+	@./scripts/fetch-reference-aasx.sh
+
 up: init ## Start the baseline AAS infrastructure
 	@$(COMPOSE) up -d --wait
 	@$(MAKE) ps
@@ -75,11 +79,21 @@ logs: ## Follow service logs
 smoke: ## Verify baseline HTTP endpoints
 	@./scripts/smoke.sh
 
+persistence-test: ## Prove repository data survives container recreation
+	@./scripts/persistence-test.sh
+
 security-test: ## Prove unauthenticated, reader, editor, and service behavior
 	@./scripts/security-test.sh
 
 exchange-test: build ## Copy AAS data through APIs and verify target registration
 	@$(COMPOSE) -f compose.yaml -f compose.exchange.yaml --profile tools run --rm aas-tooling exchange
+
+backup: init ## Create a MongoDB archive under data/backups
+	@./scripts/backup.sh
+
+restore: init ## Restore BACKUP=path into the running MongoDB service
+	@test -n "$(BACKUP)" || (echo "usage: make restore BACKUP=data/backups/file.archive" >&2; exit 2)
+	@./scripts/restore.sh "$(BACKUP)"
 
 down: ## Stop containers while preserving persistent volumes
 	@$(COMPOSE) down --remove-orphans
@@ -104,8 +118,9 @@ lint: format-check config secure-config exchange-config ## Run all static checks
 unit: build ## Run isolated model and packaging tests in the tooling container
 	@$(COMPOSE) --profile tools run --rm aas-tooling test
 
-integration: up ## Run live API integration checks
+integration: up ## Run baseline live API and persistence checks
 	@./scripts/smoke.sh
+	@./scripts/persistence-test.sh
 
-verify: lint unit integration ## Run the canonical complete verification pipeline
-	@echo "Baseline verification passed"
+verify: prerequisites lint unit ## Run every topology and produce review evidence
+	@./scripts/full-verify.sh
