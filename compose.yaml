@@ -1,0 +1,166 @@
+name: ${COMPOSE_PROJECT_NAME:-aas-learning}
+
+services:
+  mongo:
+    image: mongo:${MONGO_VERSION}
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mongosh --quiet
+          --username "$$MONGO_INITDB_ROOT_USERNAME"
+          --password "$$MONGO_INITDB_ROOT_PASSWORD"
+          --authenticationDatabase admin
+          --eval "db.adminCommand({ ping: 1 }).ok" | grep 1
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 12
+    security_opt:
+      - no-new-privileges:true
+
+  mqtt:
+    image: eclipse-mosquitto:${MOSQUITTO_VERSION}
+    restart: unless-stopped
+    volumes:
+      - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    networks:
+      - application
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mosquitto_sub -h 127.0.0.1 -p 1884 -t health -C 1
+          -i healthcheck -W 3 &
+          subscriber=$$!;
+          sleep 1;
+          mosquitto_pub -h 127.0.0.1 -p 1884 -t health -m ok;
+          wait $$subscriber
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 5
+    security_opt:
+      - no-new-privileges:true
+
+  aas-registry:
+    image: eclipsebasyx/aas-registry-log-mongodb:${BASYX_VERSION}
+    restart: unless-stopped
+    environment:
+      MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - ./config/basyx/aas-registry.yml:/workspace/config/application.yml:ro
+    ports:
+      - "127.0.0.1:8082:8080"
+    networks:
+      - application
+      - data
+    depends_on:
+      mongo:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  sm-registry:
+    image: eclipsebasyx/submodel-registry-log-mongodb:${BASYX_VERSION}
+    restart: unless-stopped
+    environment:
+      MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - ./config/basyx/sm-registry.yml:/workspace/config/application.yml:ro
+    ports:
+      - "127.0.0.1:8083:8080"
+    networks:
+      - application
+      - data
+    depends_on:
+      mongo:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  aas-discovery:
+    image: eclipsebasyx/aas-discovery:${BASYX_VERSION}
+    restart: unless-stopped
+    environment:
+      MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - ./config/basyx/aas-discovery.properties:/application/application.properties:ro
+    ports:
+      - "127.0.0.1:8084:8081"
+    networks:
+      - application
+      - data
+    depends_on:
+      mongo:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  aas-environment:
+    image: eclipsebasyx/aas-environment:${BASYX_VERSION}
+    restart: unless-stopped
+    environment:
+      MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - ./config/basyx/aas-environment.properties:/application/application.properties:ro
+      - ./data/aas:/application/aas:ro
+    ports:
+      - "127.0.0.1:8081:8081"
+    networks:
+      - application
+      - data
+    depends_on:
+      mongo:
+        condition: service_healthy
+      mqtt:
+        condition: service_healthy
+      aas-registry:
+        condition: service_healthy
+      sm-registry:
+        condition: service_healthy
+      aas-discovery:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  aas-web-ui:
+    image: eclipsebasyx/aas-gui:${AAS_GUI_VERSION}
+    restart: unless-stopped
+    environment:
+      AAS_REGISTRY_PATH: http://localhost:8082/shell-descriptors
+      SUBMODEL_REGISTRY_PATH: http://localhost:8083/submodel-descriptors
+      AAS_DISCOVERY_PATH: http://localhost:8084/lookup/shells
+      AAS_REPO_PATH: http://localhost:8081/shells
+      SUBMODEL_REPO_PATH: http://localhost:8081/submodels
+      CD_REPO_PATH: http://localhost:8081/concept-descriptions
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - application
+    depends_on:
+      aas-environment:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  application:
+    internal: false
+  data:
+    internal: true
+
+volumes:
+  mongo-data:

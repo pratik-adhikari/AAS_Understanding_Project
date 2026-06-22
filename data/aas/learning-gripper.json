@@ -1,0 +1,70 @@
+{
+  "assetAdministrationShells": [
+    {
+      "id": "https://example.org/aas/learning-gripper/001",
+      "idShort": "LearningGripper",
+      "assetInformation": {
+        "assetKind": "Instance",
+        "globalAssetId": "https://example.org/assets/gripper/001",
+        "assetType": "IndustrialGripper"
+      },
+      "submodels": [
+        {
+          "type": "ModelReference",
+          "keys": [
+            {
+              "type": "Submodel",
+              "value": "https://example.org/submodels/nameplate/learning-gripper/001"
+            }
+          ]
+        }
+      ],
+      "modelType": "AssetAdministrationShell"
+    }
+  ],
+  "submodels": [
+    {
+      "id": "https://example.org/submodels/nameplate/learning-gripper/001",
+      "idShort": "DigitalNameplate",
+      "kind": "Instance",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [
+          {
+            "type": "GlobalReference",
+            "value": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate"
+          }
+        ]
+      },
+      "submodelElements": [
+        {
+          "idShort": "ManufacturerName",
+          "valueType": "xs:string",
+          "value": "AAS Learning Factory",
+          "modelType": "Property"
+        },
+        {
+          "idShort": "ManufacturerProductDesignation",
+          "valueType": "xs:string",
+          "value": "Teaching Gripper TG-001",
+          "modelType": "Property"
+        },
+        {
+          "idShort": "SerialNumber",
+          "valueType": "xs:string",
+          "value": "TG-001-0001",
+          "modelType": "Property"
+        },
+        {
+          "idShort": "MaxGripForce",
+          "valueType": "xs:double",
+          "value": "450",
+          "modelType": "Property"
+        }
+      ],
+      "modelType": "Submodel"
+    }
+  ],
+  "conceptDescriptions": []
+}
+
