@@ -1,0 +1,11 @@
+---
+basyx:
+  cors:
+    allowed-origins: "http://localhost:3100"
+    allowed-methods: "GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD"
+
+spring:
+  data:
+    mongodb:
+      uri: "mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@partner-mongo:27017/partner-aas-registry?authSource=admin"
+

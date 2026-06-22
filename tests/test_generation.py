@@ -63,6 +63,20 @@ def test_json_and_aasx_roundtrip(tmp_path: Path) -> None:
     assert aasx_store.get_identifiable(SUBMODEL_ID) is not None
 
 
+def test_generation_is_byte_reproducible(tmp_path: Path) -> None:
+    store, shell_id = build_environment(load_source(SOURCE))
+    first_json = tmp_path / "first.json"
+    first_aasx = tmp_path / "first.aasx"
+    second_json = tmp_path / "second.json"
+    second_aasx = tmp_path / "second.aasx"
+
+    write_outputs(store, shell_id, first_json, first_aasx)
+    write_outputs(store, shell_id, second_json, second_aasx)
+
+    assert first_json.read_bytes() == second_json.read_bytes()
+    assert first_aasx.read_bytes() == second_aasx.read_bytes()
+
+
 def test_rejects_unknown_source_version(tmp_path: Path) -> None:
     source = tmp_path / "invalid.yaml"
     source.write_text("schema_version: 99\n", encoding="utf-8")

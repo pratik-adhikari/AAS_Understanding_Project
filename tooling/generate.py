@@ -60,7 +60,7 @@ def build_environment(
     shell_source = source["aas"]
     nameplate_source = source["nameplate"]
 
-    properties: set[model.Property] = set()
+    properties: list[model.Property] = []
     concept_descriptions: list[model.ConceptDescription] = []
 
     for item in nameplate_source["properties"]:
@@ -68,7 +68,7 @@ def build_environment(
         if value_type_name not in VALUE_TYPES:
             raise ValueError(f"unsupported value_type: {value_type_name}")
 
-        properties.add(
+        properties.append(
             model.Property(
                 id_short=item["id_short"],
                 value_type=VALUE_TYPES[value_type_name],
@@ -122,6 +122,9 @@ def write_outputs(
     aasx_output.parent.mkdir(parents=True, exist_ok=True)
 
     write_aas_json_file(json_output, object_store, indent=2)
+    serialized_json = json_output.read_text(encoding="utf-8")
+    if not serialized_json.endswith("\n"):
+        json_output.write_text(serialized_json + "\n", encoding="utf-8")
     read_aas_json_file(json_output, failsafe=False)
 
     file_store = aasx.DictSupplementaryFileContainer()

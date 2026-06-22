@@ -11,11 +11,18 @@ case "${1:-}" in
   test)
     exec pytest -q -p no:cacheprovider tests
     ;;
+  exchange)
+    exec python -m tooling.exchange \
+      --source http://aas-environment:8081 \
+      --target http://partner-aas-environment:8081 \
+      --target-registry http://partner-aas-registry:8080 \
+      --evidence data/generated/exchange-evidence.json
+    ;;
   shell)
     exec /bin/sh
     ;;
   *)
-    echo "usage: entrypoint.sh {generate|test|shell}" >&2
+    echo "usage: entrypoint.sh {generate|test|exchange|shell}" >&2
     exit 2
     ;;
 esac

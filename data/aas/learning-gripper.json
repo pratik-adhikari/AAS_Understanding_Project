@@ -1,8 +1,9 @@
 {
   "assetAdministrationShells": [
     {
-      "id": "https://example.org/aas/learning-gripper/001",
       "idShort": "LearningGripper",
+      "modelType": "AssetAdministrationShell",
+      "id": "https://example.org/aas/learning-gripper/001",
       "assetInformation": {
         "assetKind": "Instance",
         "globalAssetId": "https://example.org/assets/gripper/001",
@@ -18,15 +19,14 @@
             }
           ]
         }
-      ],
-      "modelType": "AssetAdministrationShell"
+      ]
     }
   ],
   "submodels": [
     {
-      "id": "https://example.org/submodels/nameplate/learning-gripper/001",
       "idShort": "DigitalNameplate",
-      "kind": "Instance",
+      "modelType": "Submodel",
+      "id": "https://example.org/submodels/nameplate/learning-gripper/001",
       "semanticId": {
         "type": "ExternalReference",
         "keys": [
@@ -39,32 +39,111 @@
       "submodelElements": [
         {
           "idShort": "ManufacturerName",
-          "valueType": "xs:string",
+          "modelType": "Property",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "GlobalReference",
+                "value": "https://example.org/concepts/ManufacturerName"
+              }
+            ]
+          },
           "value": "AAS Learning Factory",
-          "modelType": "Property"
+          "valueType": "xs:string"
         },
         {
           "idShort": "ManufacturerProductDesignation",
-          "valueType": "xs:string",
+          "modelType": "Property",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "GlobalReference",
+                "value": "https://example.org/concepts/ManufacturerProductDesignation"
+              }
+            ]
+          },
           "value": "Teaching Gripper TG-001",
-          "modelType": "Property"
+          "valueType": "xs:string"
         },
         {
           "idShort": "SerialNumber",
-          "valueType": "xs:string",
+          "modelType": "Property",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "GlobalReference",
+                "value": "https://example.org/concepts/SerialNumber"
+              }
+            ]
+          },
           "value": "TG-001-0001",
-          "modelType": "Property"
+          "valueType": "xs:string"
         },
         {
           "idShort": "MaxGripForce",
-          "valueType": "xs:double",
-          "value": "450",
-          "modelType": "Property"
+          "modelType": "Property",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "GlobalReference",
+                "value": "https://example.org/concepts/MaxGripForce"
+              }
+            ]
+          },
+          "value": "450.0",
+          "valueType": "xs:double"
         }
-      ],
-      "modelType": "Submodel"
+      ]
     }
   ],
-  "conceptDescriptions": []
+  "conceptDescriptions": [
+    {
+      "idShort": "ManufacturerName",
+      "description": [
+        {
+          "language": "en",
+          "text": "Legal name of the organization that manufactured the asset."
+        }
+      ],
+      "modelType": "ConceptDescription",
+      "id": "https://example.org/concepts/ManufacturerName"
+    },
+    {
+      "idShort": "ManufacturerProductDesignation",
+      "description": [
+        {
+          "language": "en",
+          "text": "Human-readable product designation assigned by the manufacturer."
+        }
+      ],
+      "modelType": "ConceptDescription",
+      "id": "https://example.org/concepts/ManufacturerProductDesignation"
+    },
+    {
+      "idShort": "SerialNumber",
+      "description": [
+        {
+          "language": "en",
+          "text": "Manufacturer-assigned identifier for this individual asset."
+        }
+      ],
+      "modelType": "ConceptDescription",
+      "id": "https://example.org/concepts/SerialNumber"
+    },
+    {
+      "idShort": "MaxGripForce",
+      "description": [
+        {
+          "language": "en",
+          "text": "Maximum nominal gripping force in newtons."
+        }
+      ],
+      "modelType": "ConceptDescription",
+      "id": "https://example.org/concepts/MaxGripForce"
+    }
+  ]
 }
-

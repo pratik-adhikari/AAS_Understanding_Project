@@ -1,0 +1,142 @@
+services:
+  aas-tooling:
+    networks:
+      - partner-application
+
+  partner-mongo:
+    image: mongo:${MONGO_VERSION}
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - partner-mongo-data:/data/db
+    networks:
+      - partner-data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mongosh --quiet
+          --username "$$MONGO_INITDB_ROOT_USERNAME"
+          --password "$$MONGO_INITDB_ROOT_PASSWORD"
+          --authenticationDatabase admin
+          --eval "db.adminCommand({ ping: 1 }).ok" | grep 1
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 12
+    security_opt:
+      - no-new-privileges:true
+
+  partner-aas-registry:
+    image: eclipsebasyx/aas-registry-log-mongodb:${BASYX_VERSION}
+    restart: unless-stopped
+    environment:
+      MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - ./config/partner/aas-registry.yml:/workspace/config/application.yml:ro
+    ports:
+      - "127.0.0.1:8182:8080"
+    networks:
+      - partner-application
+      - partner-data
+    depends_on:
+      partner-mongo:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  partner-sm-registry:
+    image: eclipsebasyx/submodel-registry-log-mongodb:${BASYX_VERSION}
+    restart: unless-stopped
+    environment:
+      MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - ./config/partner/sm-registry.yml:/workspace/config/application.yml:ro
+    ports:
+      - "127.0.0.1:8183:8080"
+    networks:
+      - partner-application
+      - partner-data
+    depends_on:
+      partner-mongo:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  partner-aas-discovery:
+    image: eclipsebasyx/aas-discovery:${BASYX_VERSION}
+    restart: unless-stopped
+    environment:
+      MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - ./config/partner/aas-discovery.properties:/application/application.properties:ro
+    ports:
+      - "127.0.0.1:8184:8081"
+    networks:
+      - partner-application
+      - partner-data
+    depends_on:
+      partner-mongo:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  partner-aas-environment:
+    image: eclipsebasyx/aas-environment:${BASYX_VERSION}
+    restart: unless-stopped
+    environment:
+      MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - ./config/partner/aas-environment.properties:/application/application.properties:ro
+      - ./data/partner-aas:/application/aas:ro
+    ports:
+      - "127.0.0.1:8181:8081"
+    networks:
+      - partner-application
+      - partner-data
+    depends_on:
+      partner-mongo:
+        condition: service_healthy
+      partner-aas-registry:
+        condition: service_healthy
+      partner-sm-registry:
+        condition: service_healthy
+      partner-aas-discovery:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  partner-aas-web-ui:
+    image: eclipsebasyx/aas-gui:${AAS_GUI_VERSION}
+    restart: unless-stopped
+    environment:
+      AAS_REGISTRY_PATH: http://localhost:8182/shell-descriptors
+      SUBMODEL_REGISTRY_PATH: http://localhost:8183/submodel-descriptors
+      AAS_DISCOVERY_PATH: http://localhost:8184/lookup/shells
+      AAS_REPO_PATH: http://localhost:8181/shells
+      SUBMODEL_REPO_PATH: http://localhost:8181/submodels
+      CD_REPO_PATH: http://localhost:8181/concept-descriptions
+    ports:
+      - "127.0.0.1:3100:3000"
+    networks:
+      - partner-application
+    depends_on:
+      partner-aas-environment:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  partner-application:
+  partner-data:
+    internal: true
+
+volumes:
+  partner-mongo-data:
+

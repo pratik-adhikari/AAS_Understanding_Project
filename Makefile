@@ -3,8 +3,9 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help init prerequisites config secure-config pull build generate up \
-	secure-up ps secure-ps logs smoke security-test down secure-down clean \
+.PHONY: help init prerequisites config secure-config exchange-config pull \
+	build generate up secure-up exchange-up ps secure-ps exchange-ps logs \
+	smoke security-test exchange-test down secure-down exchange-down clean \
 	format-check lint unit integration verify
 
 help:
@@ -29,6 +30,12 @@ secure-config: init ## Validate the secured Compose override
 	@$(COMPOSE) -f compose.yaml -f compose.secure.yaml config > artifacts/compose.secure.rendered.yaml
 	@echo "Secured Compose configuration is valid"
 
+exchange-config: init ## Validate the independent partner topology
+	@mkdir -p artifacts
+	@$(COMPOSE) -f compose.yaml -f compose.exchange.yaml config --quiet
+	@$(COMPOSE) -f compose.yaml -f compose.exchange.yaml config > artifacts/compose.exchange.rendered.yaml
+	@echo "Exchange Compose configuration is valid"
+
 pull: init ## Pull all pinned runtime images
 	@$(COMPOSE) pull
 
@@ -48,11 +55,19 @@ secure-up: init ## Replace the baseline with the Keycloak/RBAC deployment
 	@$(COMPOSE) -f compose.yaml -f compose.secure.yaml up -d --wait
 	@$(MAKE) secure-ps
 
+exchange-up: init ## Start two independent AAS environments
+	@$(COMPOSE) -f compose.yaml -f compose.secure.yaml down --remove-orphans
+	@$(COMPOSE) -f compose.yaml -f compose.exchange.yaml up -d --wait
+	@$(MAKE) exchange-ps
+
 ps: ## Show project container and health status
 	@$(COMPOSE) ps
 
 secure-ps: ## Show secured deployment status
 	@$(COMPOSE) -f compose.yaml -f compose.secure.yaml ps
+
+exchange-ps: ## Show primary and partner deployment status
+	@$(COMPOSE) -f compose.yaml -f compose.exchange.yaml ps
 
 logs: ## Follow service logs
 	@$(COMPOSE) logs -f --tail=200
@@ -63,11 +78,17 @@ smoke: ## Verify baseline HTTP endpoints
 security-test: ## Prove unauthenticated, reader, editor, and service behavior
 	@./scripts/security-test.sh
 
+exchange-test: build ## Copy AAS data through APIs and verify target registration
+	@$(COMPOSE) -f compose.yaml -f compose.exchange.yaml --profile tools run --rm aas-tooling exchange
+
 down: ## Stop containers while preserving persistent volumes
 	@$(COMPOSE) down --remove-orphans
 
 secure-down: ## Stop the secured deployment while preserving volumes
 	@$(COMPOSE) -f compose.yaml -f compose.secure.yaml down --remove-orphans
+
+exchange-down: ## Stop both exchange environments while preserving volumes
+	@$(COMPOSE) -f compose.yaml -f compose.exchange.yaml down --remove-orphans
 
 clean: ## Remove all project containers, networks, and persistent volumes
 	@$(COMPOSE) down --volumes --remove-orphans
@@ -77,7 +98,7 @@ format-check: ## Check whitespace and generated-file policy
 	@git diff --check
 	@./scripts/check-repository.sh
 
-lint: format-check config secure-config ## Run static repository and Compose checks
+lint: format-check config secure-config exchange-config ## Run all static checks
 	@./scripts/check-image-tags.sh
 
 unit: build ## Run isolated model and packaging tests in the tooling container
