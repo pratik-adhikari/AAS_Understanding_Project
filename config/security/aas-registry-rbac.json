@@ -1,0 +1,23 @@
+[
+  {
+    "role": "reader",
+    "action": "READ",
+    "targetInformation": {"@type": "aas-registry", "aasIds": "*"}
+  },
+  {
+    "role": "editor",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE"],
+    "targetInformation": {"@type": "aas-registry", "aasIds": "*"}
+  },
+  {
+    "role": "uploader",
+    "action": "READ",
+    "targetInformation": {"@type": "aas-registry", "aasIds": "*"}
+  },
+  {
+    "role": "admin",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE"],
+    "targetInformation": {"@type": "aas-registry", "aasIds": "*"}
+  }
+]
+

@@ -1,0 +1,23 @@
+[
+  {
+    "role": "reader",
+    "action": "READ",
+    "targetInformation": {"@type": "submodel-registry", "submodelIds": "*"}
+  },
+  {
+    "role": "editor",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE"],
+    "targetInformation": {"@type": "submodel-registry", "submodelIds": "*"}
+  },
+  {
+    "role": "uploader",
+    "action": "READ",
+    "targetInformation": {"@type": "submodel-registry", "submodelIds": "*"}
+  },
+  {
+    "role": "admin",
+    "action": ["CREATE", "READ", "UPDATE", "DELETE"],
+    "targetInformation": {"@type": "submodel-registry", "submodelIds": "*"}
+  }
+]
+

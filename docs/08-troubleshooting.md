@@ -39,3 +39,17 @@ curl -v http://127.0.0.1:8081/actuator/health
 If the first succeeds and the second fails, inspect port publishing, host
 firewall policy, and whether the command itself is running in a sandbox that
 blocks loopback access.
+
+## `.localhost` resolves inside a container as container loopback
+
+Names ending in `.localhost` have special browser and Curl semantics: they
+resolve to loopback. A Docker network alias with that suffix may therefore be
+ignored by HTTP clients.
+
+The secured deployment uses:
+
+- `auth.aas.localhost:9090` as the public token issuer seen by the browser;
+- `keycloak:9090` for internal token and JWK requests;
+- explicit `issuer-uri` plus internal `jwk-set-uri` in resource servers.
+
+This preserves issuer validation without editing the host's `/etc/hosts`.

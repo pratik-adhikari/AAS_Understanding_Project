@@ -1,0 +1,124 @@
+services:
+  keycloak:
+    image: keycloak/keycloak:${KEYCLOAK_VERSION:-26.6.3}
+    command:
+      - start-dev
+      - --import-realm
+      - --http-port=9090
+    restart: unless-stopped
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-keycloak_admin_password}
+      KC_HOSTNAME: http://auth.aas.localhost:9090
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./config/keycloak/aas-learning-realm.json:/opt/keycloak/data/import/aas-learning-realm.json:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      application:
+        aliases:
+          - auth.aas.localhost
+    security_opt:
+      - no-new-privileges:true
+
+  keycloak-ready:
+    image: curlimages/curl:${CURL_VERSION:-8.14.1}
+    command:
+      - /bin/sh
+      - -ec
+      - >-
+        until curl --fail --silent
+        http://keycloak:9090/realms/aas-learning/.well-known/openid-configuration
+        >/dev/null; do sleep 2; done
+    depends_on:
+      keycloak:
+        condition: service_started
+    networks:
+      - application
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+
+  aas-registry:
+    environment:
+      BASYX_FEATURE_AUTHORIZATION_ENABLED: "true"
+      BASYX_FEATURE_AUTHORIZATION_TYPE: rbac
+      BASYX_FEATURE_AUTHORIZATION_JWTBEARERTOKENPROVIDER: keycloak
+      BASYX_FEATURE_AUTHORIZATION_RBAC_FILE: file:/workspace/config/rbac_rules.json
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://auth.aas.localhost:9090/realms/aas-learning
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:9090/realms/aas-learning/protocol/openid-connect/certs
+    volumes:
+      - ./config/security/aas-registry-rbac.json:/workspace/config/rbac_rules.json:ro
+    depends_on:
+      keycloak-ready:
+        condition: service_completed_successfully
+
+  sm-registry:
+    environment:
+      BASYX_FEATURE_AUTHORIZATION_ENABLED: "true"
+      BASYX_FEATURE_AUTHORIZATION_TYPE: rbac
+      BASYX_FEATURE_AUTHORIZATION_JWTBEARERTOKENPROVIDER: keycloak
+      BASYX_FEATURE_AUTHORIZATION_RBAC_FILE: file:/workspace/config/rbac_rules.json
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://auth.aas.localhost:9090/realms/aas-learning
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:9090/realms/aas-learning/protocol/openid-connect/certs
+    volumes:
+      - ./config/security/sm-registry-rbac.json:/workspace/config/rbac_rules.json:ro
+    depends_on:
+      keycloak-ready:
+        condition: service_completed_successfully
+
+  aas-discovery:
+    volumes:
+      - ./config/security/aas-discovery.properties:/application/application.properties:ro
+      - ./config/security/aas-discovery-rbac.json:/application/rbac_rules.json:ro
+    depends_on:
+      keycloak-ready:
+        condition: service_completed_successfully
+
+  aas-environment:
+    environment:
+      AAS_SERVICE_CLIENT_SECRET: ${AAS_SERVICE_CLIENT_SECRET:-aas_service_dev_secret}
+    volumes:
+      - ./config/security/aas-environment.properties:/application/application.properties:ro
+      - ./config/security/aas-environment-rbac.json:/application/rbac_rules.json:ro
+    depends_on:
+      keycloak-ready:
+        condition: service_completed_successfully
+
+  aas-web-ui:
+    environment:
+      KEYCLOAK_URL: http://auth.aas.localhost:9090
+      KEYCLOAK_REALM: aas-learning
+      KEYCLOAK_CLIENT_ID: aas-web-ui
+
+  reverse-proxy:
+    image: nginx:${NGINX_VERSION:-1.29.0-alpine}
+    restart: unless-stopped
+    volumes:
+      - ./config/nginx/secure.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "127.0.0.1:8090:8080"
+    networks:
+      - application
+    depends_on:
+      aas-environment:
+        condition: service_healthy
+      aas-registry:
+        condition: service_healthy
+      sm-registry:
+        condition: service_healthy
+      aas-discovery:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8080/proxy-health | grep ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  keycloak-data:

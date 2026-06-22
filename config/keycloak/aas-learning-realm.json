@@ -1,0 +1,107 @@
+{
+  "realm": "aas-learning",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": false,
+  "roles": {
+    "realm": [
+      {"name": "reader"},
+      {"name": "editor"},
+      {"name": "uploader"},
+      {"name": "admin"}
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "aas-cli",
+      "name": "AAS command-line exercises",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": false
+    },
+    {
+      "clientId": "aas-web-ui",
+      "name": "BaSyx web UI",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+      ]
+    },
+    {
+      "clientId": "aas-service",
+      "name": "BaSyx service-to-service client",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "aas_service_dev_secret",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false
+    }
+  ],
+  "users": [
+    {
+      "username": "reader",
+      "firstName": "Read",
+      "lastName": "Only",
+      "email": "reader@example.invalid",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {"type": "password", "value": "reader-password", "temporary": false}
+      ],
+      "realmRoles": ["reader"]
+    },
+    {
+      "username": "editor",
+      "firstName": "Model",
+      "lastName": "Editor",
+      "email": "editor@example.invalid",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {"type": "password", "value": "editor-password", "temporary": false}
+      ],
+      "realmRoles": ["editor"]
+    },
+    {
+      "username": "uploader",
+      "firstName": "AASX",
+      "lastName": "Uploader",
+      "email": "uploader@example.invalid",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {"type": "password", "value": "uploader-password", "temporary": false}
+      ],
+      "realmRoles": ["uploader"]
+    },
+    {
+      "username": "administrator",
+      "firstName": "Demo",
+      "lastName": "Administrator",
+      "email": "administrator@example.invalid",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {"type": "password", "value": "admin-password", "temporary": false}
+      ],
+      "realmRoles": ["admin"]
+    },
+    {
+      "username": "service-account-aas-service",
+      "enabled": true,
+      "serviceAccountClientId": "aas-service",
+      "realmRoles": ["admin"]
+    }
+  ]
+}
