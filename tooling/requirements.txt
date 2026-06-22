@@ -1,0 +1,4 @@
+basyx-python-sdk==2.0.1
+PyYAML==6.0.2
+pytest==8.4.1
+

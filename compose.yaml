@@ -1,6 +1,29 @@
 name: ${COMPOSE_PROJECT_NAME:-aas-learning}
 
 services:
+  aas-tooling:
+    build:
+      context: .
+      dockerfile: tooling/Dockerfile
+      network: host
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION}
+    profiles:
+      - tools
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    environment:
+      PYTHONPATH: /workspace
+    working_dir: /workspace
+    volumes:
+      - ./data:/workspace/data
+      - ./tooling:/workspace/tooling:ro
+      - ./tests:/workspace/tests:ro
+    entrypoint: ["/workspace/tooling/entrypoint.sh"]
+    networks:
+      - application
+    security_opt:
+      - no-new-privileges:true
+
   mongo:
     image: mongo:${MONGO_VERSION}
     restart: unless-stopped

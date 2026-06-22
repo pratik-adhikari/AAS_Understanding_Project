@@ -3,8 +3,8 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help init prerequisites config pull up ps logs smoke down clean \
-	format-check lint unit integration verify
+.PHONY: help init prerequisites config pull build generate up ps logs smoke \
+	down clean format-check lint unit integration verify
 
 help:
 	@awk 'BEGIN {FS = ":.*##"; printf "AAS learning project commands:\\n\\n"} /^[a-zA-Z_-]+:.*?##/ {printf "  %-18s %s\\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -24,6 +24,13 @@ config: init ## Validate and render the Compose configuration
 
 pull: init ## Pull all pinned runtime images
 	@$(COMPOSE) pull
+
+build: init ## Build the pinned Python AAS tooling image
+	@$(COMPOSE) --profile tools build aas-tooling
+
+generate: build ## Generate JSON and AASX from source product data
+	@install -d -m 0777 data/generated
+	@$(COMPOSE) --profile tools run --rm aas-tooling generate
 
 up: init ## Start the baseline AAS infrastructure
 	@$(COMPOSE) up -d --wait
@@ -52,12 +59,11 @@ format-check: ## Check whitespace and generated-file policy
 lint: format-check config ## Run static repository and Compose checks
 	@./scripts/check-image-tags.sh
 
-unit: ## Run isolated unit tests in the tooling container
-	@echo "Unit test suite will be enabled with the model-generation milestone"
+unit: build ## Run isolated model and packaging tests in the tooling container
+	@$(COMPOSE) --profile tools run --rm aas-tooling test
 
 integration: up ## Run live API integration checks
 	@./scripts/smoke.sh
 
 verify: lint unit integration ## Run the canonical complete verification pipeline
 	@echo "Baseline verification passed"
-

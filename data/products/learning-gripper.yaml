@@ -1,0 +1,39 @@
+schema_version: 1
+
+asset:
+  id: https://example.org/assets/gripper/001
+  id_short: LearningGripperAsset
+  kind: Instance
+  type: IndustrialGripper
+
+aas:
+  id: https://example.org/aas/learning-gripper/001
+  id_short: LearningGripper
+
+nameplate:
+  id: https://example.org/submodels/nameplate/learning-gripper/001
+  id_short: DigitalNameplate
+  semantic_id: https://admin-shell.io/zvei/nameplate/2/0/Nameplate
+  properties:
+    - id_short: ManufacturerName
+      value_type: string
+      value: AAS Learning Factory
+      semantic_id: https://example.org/concepts/ManufacturerName
+      definition: Legal name of the organization that manufactured the asset.
+    - id_short: ManufacturerProductDesignation
+      value_type: string
+      value: Teaching Gripper TG-001
+      semantic_id: https://example.org/concepts/ManufacturerProductDesignation
+      definition: Human-readable product designation assigned by the manufacturer.
+    - id_short: SerialNumber
+      value_type: string
+      value: TG-001-0001
+      semantic_id: https://example.org/concepts/SerialNumber
+      definition: Manufacturer-assigned identifier for this individual asset.
+    - id_short: MaxGripForce
+      value_type: double
+      value: 450.0
+      unit: N
+      semantic_id: https://example.org/concepts/MaxGripForce
+      definition: Maximum nominal gripping force in newtons.
+
